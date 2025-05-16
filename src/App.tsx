@@ -1,24 +1,46 @@
-import React from 'react';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import Login from "./pages/Login";
+import Homepage from "./pages/Homepage";
+import ManageUsers from "./pages/ManageUsers";
+import { Layout } from "antd";
+
+const { Content } = Layout;
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <Router>
+      <Layout>
+        <Content
+          style={{
+            paddingLeft: "10%",
+            paddingRight: "10%",
+            minHeight: "100vh",
+            backgroundColor: "#f5f5f5",
+          }}
         >
-          Learn React
-        </a>
-      </header>
-    </div>
+          <AppRoutes />
+        </Content>
+      </Layout>
+    </Router>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  const isLoggedIn = !!localStorage.getItem("username");
+
+  if ((location.pathname === "/" || location.pathname === "/login") && isLoggedIn) {
+    return <Navigate to="/homepage" replace />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/homepage/*" element={<Homepage />}>
+        <Route path="manage-users" element={<ManageUsers />} />
+      </Route>
+    </Routes>
   );
 }
 

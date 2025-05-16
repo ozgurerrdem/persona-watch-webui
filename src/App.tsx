@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Homepage from "./pages/Homepage";
 import ManageUsers from "./pages/ManageUsers";
 import { Layout } from "antd";
+import NewsFeed from "./pages/NewsFeed";
 
 const { Content } = Layout;
 
@@ -38,6 +39,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to="/login" />} />
       <Route path="/login" element={<Login />} />
       <Route path="/homepage/*" element={<Homepage />}>
+        <Route index element={<NewsFeed />} />
         <Route path="manage-users" element={<ManageUsers />} />
       </Route>
     </Routes>

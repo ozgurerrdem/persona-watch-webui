@@ -2,6 +2,11 @@ import { Card, Typography } from "antd";
 import { LinkOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 type NewsCardProps = {
   title: string;
@@ -11,24 +16,28 @@ type NewsCardProps = {
   publishDate?: string;
 };
 
-export default function NewsCard({ title, content, link, platform, publishDate }: NewsCardProps) {
+export default function NewsCard({
+  title,
+  content,
+  link,
+  platform,
+  publishDate,
+}: NewsCardProps) {
   const [expanded, setExpanded] = useState(false);
 
   const truncatedContent = content.length > 150 ? content.substring(0, 150) : content;
 
-  const getPlatformFromUrl = (url: string): string => {
+  const getFaviconUrl = (url: string): string =>
+    `https://www.google.com/s2/favicons?sz=32&domain=${url}`;
+
+  const isYouTubeLink = (url: string): boolean => {
     try {
       const hostname = new URL(url).hostname;
-      const domain = hostname.replace("www.", "").split('.')[0];
-      return domain.toUpperCase();
+      return hostname.includes("youtube.com") || hostname.includes("youtu.be");
     } catch {
-      return "WEB SİTESİ";
+      return false;
     }
   };
-
-  const faviconUrl = link ? `https://www.google.com/s2/favicons?sz=32&domain=${link}` : "";
-
-  const formattedDate = publishDate ? dayjs(publishDate).format("DD MMMM YYYY HH:mm") : null;
 
   const extractYouTubeVideoId = (url: string): string | null => {
     try {
@@ -51,8 +60,11 @@ export default function NewsCard({ title, content, link, platform, publishDate }
     }
   };
 
-  const isYouTube = platform.toLowerCase() === "youtube";
-  const youTubeVideoId = isYouTube ? extractYouTubeVideoId(link) : null;
+  const youTubeVideoId = isYouTubeLink(link) ? extractYouTubeVideoId(link) : null;
+
+  const formattedDate = publishDate
+    ? dayjs.utc(publishDate).local().format("DD MMMM YYYY HH:mm")
+    : null;
 
   return (
     <Card
@@ -68,13 +80,13 @@ export default function NewsCard({ title, content, link, platform, publishDate }
         <div className="flex items-center">
           {link && (
             <img
-              src={faviconUrl}
+              src={getFaviconUrl(link)}
               alt="favicon"
               style={{ marginRight: "0.5rem", width: 16, height: 16 }}
             />
           )}
           <Typography.Text strong>{title}</Typography.Text>
-          {link && !isYouTube && (
+          {link && (
             <a
               href={link}
               target="_blank"
@@ -87,13 +99,33 @@ export default function NewsCard({ title, content, link, platform, publishDate }
         </div>
         {formattedDate && (
           <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
-            {formattedDate}
+            Bulunma zamanı: {formattedDate}
           </Typography.Text>
         )}
       </div>
 
-      {youTubeVideoId ? (
-        <div className="w-full aspect-video">
+      <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
+        {expanded ? content : truncatedContent}
+        {content.length > 150 && !expanded && (
+          <>
+            ...{" "}
+            <Typography.Link onClick={() => setExpanded(true)}>
+              Devamını Oku
+            </Typography.Link>
+          </>
+        )}
+        {expanded && content.length > 150 && (
+          <>
+            {" "}
+            <Typography.Link onClick={() => setExpanded(false)}>
+              Gizle
+            </Typography.Link>
+          </>
+        )}
+      </Typography.Paragraph>
+
+      {youTubeVideoId && (
+        <div className="w-full aspect-video mt-4">
           <iframe
             width="100%"
             height="315"
@@ -104,26 +136,6 @@ export default function NewsCard({ title, content, link, platform, publishDate }
             allowFullScreen
           ></iframe>
         </div>
-      ) : (
-        <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
-          {expanded ? content : truncatedContent}
-          {content.length > 150 && !expanded && (
-            <>
-              ...{" "}
-              <Typography.Link onClick={() => setExpanded(true)}>
-                Devamını Oku
-              </Typography.Link>
-            </>
-          )}
-          {expanded && content.length > 150 && (
-            <>
-              {" "}
-              <Typography.Link onClick={() => setExpanded(false)}>
-                Gizle
-              </Typography.Link>
-            </>
-          )}
-        </Typography.Paragraph>
       )}
     </Card>
   );

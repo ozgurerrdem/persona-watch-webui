@@ -1,20 +1,10 @@
 import { useEffect, useState } from "react";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
-import { Modal as AntModal } from "antd";
-import {
-  Table,
-  Typography,
-  Tag,
-  message,
-  Modal,
-  Form,
-  Input,
-  Checkbox,
-  Button,
-} from "antd";
+import { Modal as AntModal, Table, Typography, Tag, message, Modal, Form, Input, Checkbox, Button } from "antd";
 import { EditOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
+import { useAuth } from "../../contexts/AuthContext";
 
 const { Title } = Typography;
 
@@ -35,21 +25,23 @@ function ManageUsers() {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
+  const { isAdmin, username: currentUsername, logout } = useAuth();
+
   useEffect(() => {
-    const isAdmin = localStorage.getItem("isAdmin") === "true";
+    console.log("isAdmin:", isAdmin);
+    console.log("currentUsername:", currentUsername);
     if (!isAdmin) {
       message.error("Bu sayfaya erişim yetkiniz yok.");
       navigate("/homepage");
     } else {
       fetchUsers();
     }
-  }, []);
+  }, [isAdmin]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const response = await api.get("/user/all");
-      const currentUsername = localStorage.getItem("username");
 
       const sortedUsers = [
         ...response.data.filter((u: User) => u.username === currentUsername),
@@ -92,11 +84,10 @@ function ManageUsers() {
           await api.delete(`/user/${editingUser.id}`);
           message.success("Kullanıcı silindi.");
 
-          const currentUsername = localStorage.getItem("username");
           if (editingUser.username === currentUsername) {
             message.info("Hesabınızı sildiniz, oturum sonlandırılıyor.");
             setTimeout(() => {
-              localStorage.clear();
+              logout();
               navigate("/login");
             }, 200);
             return;
@@ -122,11 +113,10 @@ function ManageUsers() {
         await api.put(`/user/${editingUser.id}`, values);
         message.success("Kullanıcı güncellendi.");
 
-        const currentUsername = localStorage.getItem("username");
         if (editingUser.username === currentUsername) {
           message.info("Bilgileriniz güncellendi, lütfen tekrar giriş yapın.");
           setTimeout(() => {
-            localStorage.clear();
+            logout();
             navigate("/login");
           }, 200);
           return;
@@ -164,7 +154,7 @@ function ManageUsers() {
       width: 50,
       align: "right" as const,
       render: (_: any, record: User) =>
-        record.username != "admin" ? (
+        record.username !== "admin" ? (
           <Button
             icon={<EditOutlined />}
             size="small"
@@ -197,10 +187,12 @@ function ManageUsers() {
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
-          !isNewUser &&
-          <Button key="cancel" onClick={() => setIsModalVisible(false)}>
-            İptal
-          </Button>, (
+          !isNewUser && (
+            <Button key="cancel" onClick={() => setIsModalVisible(false)}>
+              İptal
+            </Button>
+          ),
+          !isNewUser && (
             <Button key="delete" danger onClick={handleDelete}>
               Sil
             </Button>
@@ -209,7 +201,6 @@ function ManageUsers() {
             Kaydet
           </Button>,
         ]}
-
       >
         <Form form={form} layout="vertical">
           <Form.Item
@@ -236,11 +227,7 @@ function ManageUsers() {
           <Form.Item
             label="Şifre"
             name="password"
-            rules={
-              isNewUser
-                ? [{ required: true, message: "Şifre zorunlu" }]
-                : []
-            }
+            rules={isNewUser ? [{ required: true, message: "Şifre zorunlu" }] : []}
           >
             <Input.Password />
           </Form.Item>

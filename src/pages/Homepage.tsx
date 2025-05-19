@@ -1,7 +1,7 @@
 import { Layout } from "antd";
 import { useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
-import AppHeader from "../components/AppHeader";
+import AppHeader from "../components/Header/AppHeader";
 
 const { Content } = Layout;
 

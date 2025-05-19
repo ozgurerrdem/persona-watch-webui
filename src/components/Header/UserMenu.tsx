@@ -1,13 +1,12 @@
 import { Button, Dropdown, Menu, Typography } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function UserMenu() {
   const navigate = useNavigate();
-
-  const username = localStorage.getItem("username") ?? "";
-  const fullname = localStorage.getItem("fullname") ?? username;
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const { username, fullName, isAdmin, logout } = useAuth();
+  const displayName = fullName || username || "";
 
   const capitalizeName = (name: string) =>
     name
@@ -16,7 +15,7 @@ export default function UserMenu() {
       .join(" ");
 
   const handleLogout = () => {
-    localStorage.clear();
+    logout();
     navigate("/login");
   };
 
@@ -47,7 +46,7 @@ export default function UserMenu() {
   return (
     <Dropdown overlay={menu} placement="bottomRight" trigger={["click"]}>
       <Button type="text">
-        <Typography.Text strong>Merhaba, {capitalizeName(fullname)}</Typography.Text> <DownOutlined />
+        <Typography.Text strong>Merhaba, {capitalizeName(displayName)}</Typography.Text> <DownOutlined />
       </Button>
     </Dropdown>
   );

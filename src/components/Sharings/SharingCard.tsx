@@ -16,7 +16,7 @@ type NewsCardProps = {
   publishDate?: string;
 };
 
-export default function NewsCard({
+export default function SharingCard({
   title,
   content,
   link,

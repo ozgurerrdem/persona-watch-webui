@@ -60,7 +60,48 @@ export default function SharingCard({
     }
   };
 
+  const extractStartTimeText = (url: string): string | null => {
+  try {
+    const parsedUrl = new URL(url);
+    const tParam = parsedUrl.searchParams.get("t");
+    if (tParam) {
+      const match = tParam.match(/^(\d+)s?$/);
+      if (match) {
+        const totalSeconds = parseInt(match[1], 10);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const extractStartTimeSeconds = (url: string): number | null => {
+  try {
+    const parsedUrl = new URL(url);
+    const tParam = parsedUrl.searchParams.get("t");
+    if (tParam) {
+      const match = tParam.match(/^(\d+)s?$/);
+      if (match) {
+        return parseInt(match[1], 10);
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
   const youTubeVideoId = isYouTubeLink(link) ? extractYouTubeVideoId(link) : null;
+  const youTubeStartTimeText = isYouTubeLink(link) ? extractStartTimeText(link) : null;
+  const youTubeStartSeconds = isYouTubeLink(link) ? extractStartTimeSeconds(link) : null;
+
+  const isYouTubePlatform = platform.toLowerCase() === "youtube";
+  const hideDefaultTitle = isYouTubePlatform && title === content;
 
   const formattedDate = publishDate
     ? dayjs.utc(publishDate).local().format("DD MMMM YYYY HH:mm")
@@ -85,7 +126,9 @@ export default function SharingCard({
               style={{ marginRight: "0.5rem", width: 16, height: 16 }}
             />
           )}
-          <Typography.Text strong>{title}</Typography.Text>
+          {!hideDefaultTitle && (
+            <Typography.Text strong>{title}</Typography.Text>
+          )}
           {link && (
             <a
               href={link}
@@ -104,32 +147,40 @@ export default function SharingCard({
         )}
       </div>
 
-      <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
-        {expanded ? content : truncatedContent}
-        {content.length > 150 && !expanded && (
-          <>
-            ...{" "}
-            <Typography.Link onClick={() => setExpanded(true)}>
-              Devamını Oku
-            </Typography.Link>
-          </>
-        )}
-        {expanded && content.length > 150 && (
-          <>
-            {" "}
-            <Typography.Link onClick={() => setExpanded(false)}>
-              Gizle
-            </Typography.Link>
-          </>
-        )}
-      </Typography.Paragraph>
+      {isYouTubePlatform && youTubeStartTimeText && (
+        <Typography.Paragraph style={{ fontSize: "0.95rem", color: "#333" }}>
+          Bu videoda şu dakikada geçiyor: {youTubeStartTimeText}
+        </Typography.Paragraph>
+      )}
+
+      {!isYouTubePlatform && (
+        <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
+          {expanded ? content : truncatedContent}
+          {content.length > 150 && !expanded && (
+            <>
+              ...{" "}
+              <Typography.Link onClick={() => setExpanded(true)}>
+                Devamını Oku
+              </Typography.Link>
+            </>
+          )}
+          {expanded && content.length > 150 && (
+            <>
+              {" "}
+              <Typography.Link onClick={() => setExpanded(false)}>
+                Gizle
+              </Typography.Link>
+            </>
+          )}
+        </Typography.Paragraph>
+      )}
 
       {youTubeVideoId && (
         <div className="w-full aspect-video mt-4">
           <iframe
             width="100%"
             height="315"
-            src={`https://www.youtube.com/embed/${youTubeVideoId}`}
+            src={`https://www.youtube.com/embed/${youTubeVideoId}${youTubeStartSeconds ? `?start=${youTubeStartSeconds}` : ''}`}
             title={title}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

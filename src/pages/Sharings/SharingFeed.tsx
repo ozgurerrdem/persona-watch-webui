@@ -37,9 +37,9 @@ export default function SharingFeed() {
         try {
             const response = await api.get<NewsItem[]>("/news", { params });
             const data = response.data;
-
+            console.log("Veri alındı:", data);
             setNewsList(data);
-            setVisibleCount(ITEMS_PER_PAGE); // yeni veri geldiğinde sayaç sıfırlansın
+            setVisibleCount(ITEMS_PER_PAGE);
 
             const uniqueSites = Array.from(
                 new Set(
@@ -57,7 +57,7 @@ export default function SharingFeed() {
             setPlatformOptions(uniqueSites);
         } catch (error) {
             console.error("Veri alınamadı", error);
-            throw error; // 🔴 hata dışarı fırlatılıyor
+            throw error;
         }
     };
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
+import YouTubeCard from "./YoutubeCard";
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -25,83 +26,63 @@ export default function SharingCard({
 }: NewsCardProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const truncatedContent = content.length > 150 ? content.substring(0, 150) : content;
+  const truncatedContent =
+    content.length > 150 ? content.substring(0, 150) : content;
 
   const getFaviconUrl = (url: string): string =>
     `https://www.google.com/s2/favicons?sz=32&domain=${url}`;
 
-  const isYouTubeLink = (url: string): boolean => {
-    try {
-      const hostname = new URL(url).hostname;
-      return hostname.includes("youtube.com") || hostname.includes("youtu.be");
-    } catch {
-      return false;
-    }
-  };
+  const isYouTubeLink = (url: string): boolean =>
+    /(?:youtube\.com|youtu\.be)/i.test(url);
 
   const extractYouTubeVideoId = (url: string): string | null => {
     try {
       const parsedUrl = new URL(url);
-
       if (parsedUrl.hostname.includes("youtube.com")) {
         if (parsedUrl.pathname.startsWith("/embed/")) {
           return parsedUrl.pathname.split("/embed/")[1];
         }
         return parsedUrl.searchParams.get("v");
       }
-
       if (parsedUrl.hostname.includes("youtu.be")) {
         return parsedUrl.pathname.split("/")[1];
       }
-
       return null;
     } catch {
       return null;
     }
   };
 
-  const extractStartTimeText = (url: string): string | null => {
-  try {
-    const parsedUrl = new URL(url);
-    const tParam = parsedUrl.searchParams.get("t");
-    if (tParam) {
-      const match = tParam.match(/^(\d+)s?$/);
-      if (match) {
-        const totalSeconds = parseInt(match[1], 10);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-        return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  const extractStartTimeSeconds = (url: string): number | null => {
+    try {
+      const parsedUrl = new URL(url);
+      const tParam = parsedUrl.searchParams.get("t");
+      if (tParam) {
+        const match = tParam.match(/^(\d+)s?$/);
+        if (match) {
+          return parseInt(match[1], 10);
+        }
       }
+      return null;
+    } catch {
+      return null;
     }
-    return null;
-  } catch {
-    return null;
-  }
-};
+  };
 
-const extractStartTimeSeconds = (url: string): number | null => {
-  try {
-    const parsedUrl = new URL(url);
-    const tParam = parsedUrl.searchParams.get("t");
-    if (tParam) {
-      const match = tParam.match(/^(\d+)s?$/);
-      if (match) {
-        return parseInt(match[1], 10);
-      }
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
+  const formatSecondsToHMS = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   const youTubeVideoId = isYouTubeLink(link) ? extractYouTubeVideoId(link) : null;
-  const youTubeStartTimeText = isYouTubeLink(link) ? extractStartTimeText(link) : null;
-  const youTubeStartSeconds = isYouTubeLink(link) ? extractStartTimeSeconds(link) : null;
+  const startSeconds = extractStartTimeSeconds(link);
+  const isYouTube = isYouTubeLink(link);
 
-  const isYouTubePlatform = platform.toLowerCase() === "youtube";
-  const hideDefaultTitle = isYouTubePlatform && title === content;
+  const hideDefaultTitle = isYouTube && title === content;
 
   const formattedDate = publishDate
     ? dayjs.utc(publishDate).local().format("DD MMMM YYYY HH:mm")
@@ -147,46 +128,40 @@ const extractStartTimeSeconds = (url: string): number | null => {
         )}
       </div>
 
-      {isYouTubePlatform && youTubeStartTimeText && (
+      {startSeconds && (
         <Typography.Paragraph style={{ fontSize: "0.95rem", color: "#333" }}>
-          Bu videoda şu dakikada geçiyor: {youTubeStartTimeText}
+          Bu içerikte şu dakikada geçiyor: {formatSecondsToHMS(startSeconds)}
         </Typography.Paragraph>
       )}
 
-      {!isYouTubePlatform && (
-        <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
-          {expanded ? content : truncatedContent}
-          {content.length > 150 && !expanded && (
-            <>
-              ...{" "}
-              <Typography.Link onClick={() => setExpanded(true)}>
-                Devamını Oku
-              </Typography.Link>
-            </>
-          )}
-          {expanded && content.length > 150 && (
-            <>
-              {" "}
-              <Typography.Link onClick={() => setExpanded(false)}>
-                Gizle
-              </Typography.Link>
-            </>
-          )}
-        </Typography.Paragraph>
-      )}
+      {/* Açıklama tüm platformlar için gösterilir */}
+      <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
+        {expanded ? content : truncatedContent}
+        {content.length > 150 && !expanded && (
+          <>
+            ...{" "}
+            <Typography.Link onClick={() => setExpanded(true)}>
+              Devamını Oku
+            </Typography.Link>
+          </>
+        )}
+        {expanded && content.length > 150 && (
+          <>
+            {" "}
+            <Typography.Link onClick={() => setExpanded(false)}>
+              Gizle
+            </Typography.Link>
+          </>
+        )}
+      </Typography.Paragraph>
 
-      {youTubeVideoId && (
-        <div className="w-full aspect-video mt-4">
-          <iframe
-            width="100%"
-            height="315"
-            src={`https://www.youtube.com/embed/${youTubeVideoId}${youTubeStartSeconds ? `?start=${youTubeStartSeconds}` : ''}`}
-            title={title}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
-        </div>
+      {/* YouTube video gösterimi */}
+      {isYouTube && youTubeVideoId && (
+        <YouTubeCard
+          videoId={youTubeVideoId}
+          startSeconds={startSeconds}
+          title={title}
+        />
       )}
     </Card>
   );

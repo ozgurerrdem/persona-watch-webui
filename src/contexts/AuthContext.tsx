@@ -6,7 +6,7 @@ import {
   ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api"; // token'ı header'a otomatik ekleyen axios instance
+import api from "../services/api";
 
 type AuthContextType = {
   isLoggedIn: boolean;
@@ -29,9 +29,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [username, setUsername] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Sayfa yüklendiğinde localStorage'dan bilgileri çek
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUsername = localStorage.getItem("username");
@@ -44,16 +44,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setFullName(storedFullName);
       setIsAdmin(storedIsAdmin);
 
-      // ✅ Token doğruluğunu backend'e sor
       api.get("/user/validate")
         .then((res) => {
           if (res.data !== true) {
-            handleLogout(); // token geçersizse temizle
+            handleLogout();
           }
         })
         .catch(() => {
-          handleLogout(); // 401 veya ağ hatası vs.
+          handleLogout();
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
+    } else {
+      setIsLoading(false);
     }
   }, []);
 
@@ -77,8 +81,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("fullname", data.fullName);
     localStorage.setItem("isAdmin", String(data.isAdmin));
 
-    console.log("Login Status:", data.token, data.username, data.fullName, String(data.isAdmin));
-
     setIsLoggedIn(true);
     setUsername(data.username);
     setFullName(data.fullName);
@@ -88,6 +90,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     handleLogout();
   };
+
+  if (isLoading) return null;
 
   return (
     <AuthContext.Provider

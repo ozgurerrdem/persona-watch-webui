@@ -1,3 +1,4 @@
+import "dayjs/locale/tr";
 import { Card, Typography } from "antd";
 import { LinkOutlined } from "@ant-design/icons";
 import { useState } from "react";
@@ -5,7 +6,9 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import YouTubeCard from "./YoutubeCard";
+import sourceDisplayMap from "../../constants/SourceDisplayMap";
 
+dayjs.locale("tr");
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -14,6 +17,7 @@ type NewsCardProps = {
   content: string;
   link: string;
   platform: string;
+  source: string;
   publishDate?: string;
 };
 
@@ -22,7 +26,8 @@ export default function SharingCard({
   content,
   link,
   platform,
-  publishDate,
+  source,
+  publishDate
 }: NewsCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -88,6 +93,8 @@ export default function SharingCard({
     ? dayjs.utc(publishDate).local().format("DD MMMM YYYY HH:mm")
     : null;
 
+  const readableSource = sourceDisplayMap[source] || source;
+
   return (
     <Card
       className="w-full"
@@ -96,10 +103,11 @@ export default function SharingCard({
         padding: "1rem",
         borderRadius: "8px",
         boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+        position: "relative",
       }}
     >
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center">
+      <div className="flex justify-between items-start mb-3 relative">
+        <div>
           {link && (
             <img
               src={getFaviconUrl(link)}
@@ -120,12 +128,31 @@ export default function SharingCard({
               <LinkOutlined />
             </a>
           )}
+          {formattedDate && (
+            <div>
+              <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
+                Bulunma zamanı: {formattedDate}
+              </Typography.Text>
+            </div>
+          )}
         </div>
-        {formattedDate && (
-          <Typography.Text type="secondary" style={{ fontSize: "0.85rem" }}>
-            Bulunma zamanı: {formattedDate}
-          </Typography.Text>
-        )}
+        <div
+          style={{
+            position: "absolute",
+            right: 16,
+            bottom: 12,
+            fontSize: "0.80rem",
+            color: "#999",
+            fontStyle: "italic",
+            pointerEvents: "none",
+            background: "rgba(255,255,255,0.90)",
+            padding: "0 8px",
+            borderRadius: "8px",
+            zIndex: 2,
+          }}
+        >
+          Kaynak: {readableSource}
+        </div>
       </div>
 
       {startSeconds && (
@@ -134,7 +161,6 @@ export default function SharingCard({
         </Typography.Paragraph>
       )}
 
-      {/* Açıklama tüm platformlar için gösterilir */}
       <Typography.Paragraph style={{ lineHeight: "1.6", fontSize: "0.95rem", color: "#333" }}>
         {expanded ? content : truncatedContent}
         {content.length > 150 && !expanded && (
@@ -155,7 +181,6 @@ export default function SharingCard({
         )}
       </Typography.Paragraph>
 
-      {/* YouTube video gösterimi */}
       {isYouTube && youTubeVideoId && (
         <YouTubeCard
           videoId={youTubeVideoId}

@@ -3,25 +3,27 @@ import FilterBar from "../../components/Sharings/FilterBar";
 import NewsCard from "../../components/Sharings/SharingCard";
 import api from "../../services/api";
 import dayjs from "dayjs";
-import { Button, Empty, Typography } from "antd";
+import { Col, Empty, Pagination, Row } from "antd";
 import "./SharingFeed.css";
-import DoubleChevronIcon from "../../components/Sharings/DoubleChevronIcon";
 
 type NewsItem = {
     title: string;
     content: string;
     link: string;
     platform: string;
+    source: string;
     publishDate: string;
 };
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = 12;
 
 export default function SharingFeed() {
     const [newsList, setNewsList] = useState<NewsItem[]>([]);
     const [platformOptions, setPlatformOptions] = useState<string[]>([]);
+    const [sourceOptions, setSourceOptions] = useState<string[]>([]);
     const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-    const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
+    const [selectedSource, setSelectedSource] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     const handleFilter = async (searchValue: string, dateRange: [string, string] | null) => {
         const params: any = { search: searchValue };
@@ -37,10 +39,10 @@ export default function SharingFeed() {
         try {
             const response = await api.get<NewsItem[]>("/news", { params });
             const data = response.data;
-            console.log("Veri alındı:", data);
             setNewsList(data);
-            setVisibleCount(ITEMS_PER_PAGE);
+            setCurrentPage(1);
 
+            // Platform seçenekleri
             const uniqueSites = Array.from(
                 new Set(
                     data.map((item) => {
@@ -53,62 +55,80 @@ export default function SharingFeed() {
                     })
                 )
             );
-
             setPlatformOptions(uniqueSites);
+
+            // Kaynak (source) seçenekleri
+            const uniqueSources = Array.from(new Set(data.map(item => item.source).filter(Boolean)));
+            setSourceOptions(uniqueSources);
         } catch (error) {
             console.error("Veri alınamadı", error);
             throw error;
         }
     };
 
-    const handleLoadMore = () => {
-        setVisibleCount((prev) => prev + ITEMS_PER_PAGE);
-    };
-
-    const filteredNewsList = selectedPlatform
-        ? newsList.filter((item) => {
-            if (!item.link) return false;
-
+    // Filtreleme: platform ve source birlikte
+    const filteredNewsList = newsList.filter((item) => {
+        let platformMatch = true, sourceMatch = true;
+        if (selectedPlatform) {
             try {
                 const hostname = new URL(item.link).hostname.replace(/^www\./, "").toLowerCase();
-                const selected = selectedPlatform.toLowerCase();
-                return hostname === selected;
+                platformMatch = hostname === selectedPlatform.toLowerCase();
             } catch {
-                return false;
+                platformMatch = false;
             }
-        })
-        : newsList;
+        }
+        if (selectedSource) {
+            sourceMatch = (item.source || "").toLowerCase() === selectedSource.toLowerCase();
+        }
+        return platformMatch && sourceMatch;
+    });
 
-    const visibleNewsList = filteredNewsList.slice(0, visibleCount);
+    // Pagination
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedNewsList = filteredNewsList.slice(startIndex, endIndex);
+
+    // Pagination bileşeni
+    const paginationBar = (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+            <Pagination
+                current={currentPage}
+                pageSize={ITEMS_PER_PAGE}
+                total={filteredNewsList.length}
+                onChange={setCurrentPage}
+                showSizeChanger={false}
+                simple
+            />
+        </div>
+    );
 
     return (
         <>
             <FilterBar
                 platformOptions={platformOptions}
+                sourceOptions={sourceOptions}
                 onFilter={handleFilter}
                 onPlatformChange={setSelectedPlatform}
+                onSourceChange={setSelectedSource}
             />
 
-            <div className="flex flex-col gap-4">
-                {visibleNewsList.length > 0 ? (
-                    visibleNewsList.map((item, index) => (
-                        <NewsCard key={index} {...item} />
+            {filteredNewsList.length > ITEMS_PER_PAGE && paginationBar}
+
+            <Row gutter={[24, 24]}>
+                {paginatedNewsList.length > 0 ? (
+                    paginatedNewsList.map((item, index) => (
+                        <Col xs={24} sm={24} md={24} lg={24} xl={12} xxl={8} key={index}>
+                            <NewsCard {...item} />
+                        </Col>
                     ))
                 ) : (
-                    <Empty description="İçerik bulunamadı" />
+                    <Col span={24}>
+                        <Empty description="İçerik bulunamadı" />
+                    </Col>
                 )}
-            </div>
+            </Row>
 
-            {visibleNewsList.length < filteredNewsList.length && (
-                <div className="load-more-container" onClick={handleLoadMore}>
-                    <Typography.Text className="load-more-text">
-                        Daha Fazla Göster
-                    </Typography.Text>
-                    <div className="load-more-icon-wrapper">
-                        <DoubleChevronIcon />
-                    </div>
-                </div>
-            )}
+            {filteredNewsList.length > ITEMS_PER_PAGE && paginationBar}
         </>
     );
 }

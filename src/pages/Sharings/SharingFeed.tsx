@@ -39,10 +39,10 @@ export default function SharingFeed() {
         try {
             const response = await api.get<NewsItem[]>("/news", { params });
             const data = response.data;
+            
             setNewsList(data);
             setCurrentPage(1);
 
-            // Platform seçenekleri
             const uniqueSites = Array.from(
                 new Set(
                     data.map((item) => {

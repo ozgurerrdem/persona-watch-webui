@@ -1,8 +1,9 @@
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import api from "../services/api";
+import api from "../../services/api";
 import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 const { Title } = Typography;
 
@@ -11,15 +12,23 @@ function Login() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
+    const { login } = useAuth(); 
+
     const handleSubmit = async (values: any) => {
         try {
             setLoading(true);
 
             const response = await api.post("/user/login", values);
 
-            localStorage.setItem("username", response.data.username);
-            localStorage.setItem("fullname", `${response.data.firstName} ${response.data.lastName}`);
-            localStorage.setItem("isAdmin", response.data.isAdmin);
+            if (login) {
+                login({
+                    token: response.data.token,
+                    username: response.data.username,
+                    fullName: `${response.data.firstName} ${response.data.lastName}`,
+                    isAdmin: response.data.isAdmin,
+                });
+            }
+
             navigate("/homepage");
         } catch (err: any) {
             const errorMessage =
@@ -27,7 +36,6 @@ function Login() {
                     ? err.response.data
                     : "Giriş başarısız";
 
-            // Bildirimi düzgün göstermek için küçük gecikme (render çakışmalarını önler)
             setTimeout(() => {
                 message.error(errorMessage);
             }, 100);

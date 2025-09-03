@@ -1,46 +1,28 @@
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Login from "./pages/Login";
-import Homepage from "./pages/Homepage";
-import ManageUsers from "./pages/ManageUsers";
+import { BrowserRouter as Router } from "react-router-dom";
 import { Layout } from "antd";
+import { AuthProvider } from "./contexts/AuthContext";
+import AppRoutes from "./AppRoutes";
 
 const { Content } = Layout;
 
 function App() {
   return (
     <Router>
-      <Layout>
-        <Content
-          style={{
-            paddingLeft: "10%",
-            paddingRight: "10%",
-            minHeight: "100vh",
-            backgroundColor: "#f5f5f5",
-          }}
-        >
-          <AppRoutes />
-        </Content>
-      </Layout>
+      <AuthProvider>
+        <Layout>
+          <Content
+            style={{
+              paddingLeft: "10%",
+              paddingRight: "10%",
+              minHeight: "100vh",
+              backgroundColor: "#f5f5f5",
+            }}
+          >
+            <AppRoutes />
+          </Content>
+        </Layout>
+      </AuthProvider>
     </Router>
-  );
-}
-
-function AppRoutes() {
-  const location = useLocation();
-  const isLoggedIn = !!localStorage.getItem("username");
-
-  if ((location.pathname === "/" || location.pathname === "/login") && isLoggedIn) {
-    return <Navigate to="/homepage" replace />;
-  }
-
-  return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/homepage/*" element={<Homepage />}>
-        <Route path="manage-users" element={<ManageUsers />} />
-      </Route>
-    </Routes>
   );
 }
 

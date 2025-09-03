@@ -1,0 +1,35 @@
+.load-more-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 2rem auto 0 auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.load-more-text {
+  font-size: 17px;
+  color: #555;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px; /* ↓ ↓ ↓ az önce 6px'ti, azaltıldı */
+  transition: color 0.3s;
+}
+
+.load-more-icon-wrapper {
+  width: 24px;   /* ↓ ↓ ↓ az önce 32px'ti, küçüldü */
+  height: 24px;
+  transition: transform 0.3s;
+}
+
+.load-more-container:hover .load-more-text {
+  color: #1890ff;
+}
+
+.load-more-container:hover .load-more-icon-wrapper svg path {
+  stroke: #1890ff;
+}
+
+.load-more-container:hover .load-more-icon-wrapper {
+  transform: translateY(2px);
+}

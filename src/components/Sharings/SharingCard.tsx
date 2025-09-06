@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import YouTubeCard from "./YoutubeCard";
-import sourceDisplayMap from "../../constants/SourceDisplayMap";
+import { sourceDisplayMap } from '../../constants/displayMap';
 
 dayjs.locale("tr");
 dayjs.extend(utc);

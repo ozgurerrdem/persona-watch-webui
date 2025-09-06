@@ -4,6 +4,7 @@ import Login from "./pages/Login/Login";
 import Homepage from "./pages/Homepage";
 import NewsFeed from "./pages/Sharings/SharingFeed";
 import ManageUsers from "./pages/Users/ManageUsers";
+import ManageScan from "./pages/Scan/ManageScan";
 
 export default function AppRoutes() {
   const { isLoggedIn } = useAuth();
@@ -23,6 +24,7 @@ export default function AppRoutes() {
       <Route path="/homepage/*" element={<Homepage />}>
         <Route index element={<NewsFeed />} />
         <Route path="manage-users" element={<ManageUsers />} />
+        <Route path="manage-scan" element={<ManageScan />} />
       </Route>
       <Route path="*" element={<Navigate to={isLoggedIn ? "/homepage" : "/login"} replace />} />
     </Routes>

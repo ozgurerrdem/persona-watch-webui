@@ -17,9 +17,9 @@ function Login() {
     const handleSubmit = async (values: any) => {
         try {
             setLoading(true);
-
+            console.log("Submitting login with values:", values);
             const response = await api.post("/user/login", values);
-
+            console.log("Login response:", response.data);
             if (login) {
                 login({
                     token: response.data.token,

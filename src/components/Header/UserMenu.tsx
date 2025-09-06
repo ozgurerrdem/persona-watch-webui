@@ -19,21 +19,31 @@ export default function UserMenu() {
     navigate("/login");
   };
 
+  const adminItems = isAdmin
+    ? [
+        {
+          key: "manage-users",
+          label: "Kullanıcıları Yönet",
+          onClick: () => navigate("/homepage/manage-users"),
+        },
+        {
+          key: "manage-scan",
+          label: "Scan Yönetimi",
+          onClick: () => navigate("/homepage/manage-scan"),
+        },
+      ]
+    : [];
+
   const menuItems = [
     {
       key: "homepage",
       label: "Anasayfa",
       onClick: () => navigate("/homepage"),
     },
-    ...(isAdmin
-      ? [
-          {
-            key: "manage-users",
-            label: "Kullanıcıları Yönet",
-            onClick: () => navigate("/homepage/manage-users"),
-          },
-        ]
-      : []),
+    ...adminItems,
+    {
+      type: "divider" as const,
+    },
     {
       key: "logout",
       label: "Çıkış Yap",
@@ -46,7 +56,10 @@ export default function UserMenu() {
   return (
     <Dropdown overlay={menu} placement="bottomRight" trigger={["click"]}>
       <Button type="text">
-        <Typography.Text strong>Merhaba, {capitalizeName(displayName)}</Typography.Text> <DownOutlined />
+        <Typography.Text strong>
+          Merhaba, {capitalizeName(displayName)}
+        </Typography.Text>{" "}
+        <DownOutlined />
       </Button>
     </Dropdown>
   );

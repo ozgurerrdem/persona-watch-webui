@@ -1,4 +1,4 @@
-import { Layout, Typography } from "antd";
+import { Layout } from "antd";
 import { useNavigate } from "react-router-dom";
 import UserMenu from "./UserMenu";
 
